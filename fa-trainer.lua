@@ -488,4 +488,4 @@ function run_loop()
 
 end
 
-do_sometimes('run_loop()')
+do_often('run_loop()')
