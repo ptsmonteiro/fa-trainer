@@ -348,23 +348,16 @@ function get_phase()
     return current_phase
 end
 
-scenarios = {
-    {
-        {
-            phase = phases.takeoff,
-            failure = pick_random({failures.sys_5_aft_cargo_fire, failures.sys_5_aft_crg_fire_e}),
-            triggered = false
-        },
-        {
-            phase = phases.climb,
-            failure = pick_random({failures.sys_2_fmgc_1, failures.sys_2_fmgc_1_r}),
-            triggered = false
-        },
-    },
-}
+
+-- =========================
+-- Load Scenarios from External File
+-- =========================
+dofile(SCRIPT_DIRECTORY .. "scenarios.lua")
 
 function enhance_scenario(scenario)
     for i = 1, #scenario do
+        -- Add triggered key
+        scenario[i].triggered = false
         -- create a trigger for each step of the scenario
         local comparison = pick_random({-1,1})
         if (scenario[i].phase) == phases.ground then
