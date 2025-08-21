@@ -1,10 +1,26 @@
+do_often('run_loop()')
+
+--[[
+    Failure Management Trainer Script
+    ---------------------------------
+    This script manages random failure scenarios for X-Plane using FlyWithLua.
+    It defines failure types, flight phases, scenario logic, and triggers failures based on flight datarefs.
+--]]
+
 print("Failure Management Trainer script running.")
 
+-- =========================
+-- Constants and Thresholds
+-- =========================
 TAXI_GROUND_SPEED_THRESHOLD = 0.5144 -- 30 knots
 VERTICAL_SPEED_THRESHOLD = 0.508 -- 100 ft/min
 LANDING_TAKEOFF_AGL_THRESHOLD = 15.24
 
+-- =========================
+-- Failure Index Table
+-- =========================
 failures = {
+    -- ...existing code for failures table...
     sys_1_cpc_1 = 0,
     sys_1_cpc_1_r = 1,
     sys_1_cpc_2 = 2,
@@ -269,6 +285,9 @@ failures = {
     sys_18_fadec_b = 261
 }
 
+-- =========================
+-- Flight Phases
+-- =========================
 phases = {
     ground = 0,
     takeoff = 1,
@@ -279,6 +298,16 @@ phases = {
     landing = 6,
 }
 
+-- =========================
+-- Utility Functions
+-- =========================
+function pick_random(elements)
+    return elements[math.random(#elements)]
+end
+
+-- =========================
+-- Scenario Logic
+-- =========================
 cruise_time = 0
 
 function get_phase()
@@ -317,10 +346,6 @@ function get_phase()
     end
     print("phase " .. current_phase)
     return current_phase
-end
-
-function pick_random(elements)
-    return elements[math.random(#elements)]
 end
 
 scenarios = {
@@ -407,7 +432,9 @@ function print_scenario(scenario)
     end
 end
 
-
+-- =========================
+-- Failure Triggering
+-- =========================
 function trigger_failure(failure_index)
     -- FlyWithLua uses X-Plane's dataref functions: dataref() and array access with set() and get()
     -- Define datarefs if not already defined
@@ -425,40 +452,51 @@ function trigger_failure(failure_index)
     print("Triggered failure " .. tostring(failure_index))
 end
 
-
+-- =========================
+-- Dataref Listing Utility
+-- =========================
 function list_datarefs()
-    local failure_name = find_dataref("toliss_airbus/faultinjection/index_check_name") -- string
-    local failure_system = find_dataref("toliss_airbus/faultinjection/index_check_system") -- int
-    local failure_index = find_dataref("toliss_airbus/faultinjection/index_check_rw") -- int
+    -- FlyWithLua: use dataref_table for writable arrays, dataref for single values
+    local failure_name = dataref("toliss_airbus/faultinjection/index_check_name", "string")
+    local failure_system = dataref("toliss_airbus/faultinjection/index_check_system", "number")
+    local failure_index = dataref("toliss_airbus/faultinjection/index_check_rw", "number")
 
-    local file = io.open("failure_log.txt", "w")
+    local file = io.open(SCRIPT_DIRECTORY .. "failure_log.txt", "w")
 
-    for i= 0, 261 do
-        local failure_index = i
+    for i = 0, 261 do
+        -- Set the index to check
+        toliss_airbus_faultinjection_index_check_rw = i
+        -- Give X-Plane a frame to update the datarefs (FlyWithLua is single-threaded, so this is a best effort)
+        -- In practice, you may need to run this in a coroutine or with delays for large tables, but for now:
+        -- Read the updated values
+        local name = toliss_airbus_faultinjection_index_check_name or ""
+        local system = toliss_airbus_faultinjection_index_check_system or 0
+
         -- Normalize failure_name to lowercase and replace non-alphanumeric characters with underscores
-        local normalized_name = string.lower(failure_name)
+        local normalized_name = string.lower(name)
         normalized_name = string.gsub(normalized_name, "%W", "_")
-        -- Remove repeated underscores
         normalized_name = string.gsub(normalized_name, "_+", "_")
-        -- Remove trailing underscores
         normalized_name = string.gsub(normalized_name, "_$", "")
-        local output = string.format("sys_%d_%s = %d,\n", failure_system, normalized_name, failure_index)
+        local output = string.format("sys_%d_%s = %d,\n", system, normalized_name, i)
         print(output)
         file:write(output)
-     end
-    
-     file:close()
+    end
+    file:close()
 end
 
--- trigger_failure(failures.sys_2_fmgc_1)
-
+-- =========================
+-- Scenario Initialization
+-- =========================
 scenario = pick_random(scenarios)
 print_scenario(scenario)
 enhance_scenario(scenario)
 print_scenario(scenario)
 
+-- =========================
+-- Main Loop
+-- =========================
 function run_loop()
-    print "running on the loop.."
+    print("running on the loop..")
     local phase = get_phase()
     print("Current phase: " .. phase)
     for i = 1, #scenario do
@@ -485,7 +523,6 @@ function run_loop()
         end
         ::continue::
     end
-
 end
 
 do_often('run_loop()')
