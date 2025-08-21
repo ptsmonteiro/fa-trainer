@@ -409,15 +409,20 @@ end
 
 
 function trigger_failure(failure_index)
-    local numberOfFaults = find_dataref("toliss_airbus/faultinjection/numberOfFaults_rw") -- int
-    local faultIndex = find_dataref("toliss_airbus/faultinjection/fault_index_rw") -- array
-    local faultSetClear = find_dataref("toliss_airbus/faultinjection/fault_set_clear") -- array
+    -- FlyWithLua uses X-Plane's dataref functions: dataref() and array access with set() and get()
+    -- Define datarefs if not already defined
+    if not numberOfFaults then
+        numberOfFaults = dataref_table("toliss_airbus/faultinjection/numberOfFaults_rw")
+        faultIndex = dataref_table("toliss_airbus/faultinjection/fault_index_rw")
+        faultSetClear = dataref_table("toliss_airbus/faultinjection/fault_set_clear")
+    end
 
-    numberOfFaults = numberOfFaults + 1    
-    faultIndex[numberOfFaults - 1] = failure_index
-    faultSetClear[numberOfFaults - 1] = 1
-    print("Triggered failure " .. failure_index)
-
+    -- Increase the number of faults
+    numberOfFaults[0] = numberOfFaults[0] + 1
+    local idx = numberOfFaults[0] - 1
+    faultIndex[idx] = failure_index
+    faultSetClear[idx] = 1
+    print("Triggered failure " .. tostring(failure_index))
 end
 
 
