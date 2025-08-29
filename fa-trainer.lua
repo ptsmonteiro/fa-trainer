@@ -9,6 +9,9 @@ do_often('run_loop()')
 
 print("Failure Management Trainer script running.")
 
+-- Seed the random number generator for different results each run
+math.randomseed(os.time())
+
 -- =========================
 -- Constants and Thresholds
 -- =========================
@@ -388,7 +391,7 @@ function enhance_scenario(scenario)
             scenario[i].trigger = {
                 comparison = -1,
                 dataref = "sim/flightmodel/position/y_agl",
-                threshold = math.random(1, 7300), -- 24000ft
+                threshold = math.random(1, 3000), -- 10000ft
             }
         elseif (scenario[i].phase) == phases.approach then
             scenario[i].trigger = {
